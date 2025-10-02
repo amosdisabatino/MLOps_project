@@ -1,8 +1,0 @@
-README.md
-pyproject.toml
-src/mlops_project.egg-info/PKG-INFO
-src/mlops_project.egg-info/SOURCES.txt
-src/mlops_project.egg-info/dependency_links.txt
-src/mlops_project.egg-info/requires.txt
-src/mlops_project.egg-info/top_level.txt
-tests/test_model.py

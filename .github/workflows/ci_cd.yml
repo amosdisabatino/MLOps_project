@@ -35,7 +35,7 @@ jobs:
         run: docker build -t amosdisabatino/mlops_project:latest .
 
       - name: Log In To DockerHub
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       - name: Push Image
         run: docker push amosdisabatino/mlops_project:latest

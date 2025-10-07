@@ -3,6 +3,7 @@ name: CI Pipeline
 on: [push, pull_request]
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -23,3 +24,18 @@ jobs:
 
       - name: Run tests
         run: pytest tests/
+
+  build-docker:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: docker build -t amosdisabatino/mlops_project:latest .
+
+      - name: Log In To DockerHub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Push Image
+        run: docker push amosdisabatino/mlops_project:latest

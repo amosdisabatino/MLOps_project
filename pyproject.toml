@@ -11,7 +11,7 @@ dependencies = [
     'datasets',
     'evaluate',
     'pytest',
-    'sklearn',
+    'scikit-learn',
     'torch',
     'transformers',
 ]

@@ -10,9 +10,10 @@ dependencies = [
     'accelerate>=0.26.0',
     'datasets',
     'evaluate',
+    'pytest',
+    'sklearn',
     'torch',
     'transformers',
-    'pytest',
 ]
 
 [tool.setuptools.packages.find]

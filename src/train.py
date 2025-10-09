@@ -11,6 +11,7 @@ from transformers import (
 )
 import torch
 from evaluate import load
+from huggingface_hub import upload_folder
 
 os.makedirs("logs", exist_ok=True)
 
@@ -97,3 +98,13 @@ with open('models/finetuned_model/metrics.json', 'w') as f:
     json.dump({**metrics, **eval_metrics}, f, indent=4)
 
 logger.info("Fine Tuning Completed, model saved successfully.")
+
+logger.info("Upload The Model On HuggingFace...")
+
+upload_folder(
+    repo_id="DiSabatino/mlops-sentiment-model",
+    folder_path="models/finetuned_model",
+    repo_type="model",
+)
+
+logger.info("Upload Complete.")

@@ -22,9 +22,16 @@ jobs:
           pip install -e .
           pip install pytest
 
+      - name: Check Changed Files
+        id: changed-files
+        uses: tj-actions/changed-files@v45
+
       - name: Train And Upload Model On HuggingFace
+        env:
+          HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
+        if: contains(steps.changed-files.outputs.all_changed_files, 'src/') || contains(steps.changed-files.outputs.all_changed_files, 'data/')
         run: |
-          huggingface-cli login --token ${{ secrets.HUGGINGFACE_TOKEN} }
+          huggingface-cli login --token $HF_TOKEN
           python src/train.py
 
       - name: Run tests

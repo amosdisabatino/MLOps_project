@@ -23,9 +23,8 @@ jobs:
           pip install pytest
 
       - name: Train And Upload Model On HuggingFace
-        env:
-          HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN} }
         run: |
+          huggingface-cli login --token $HF_TOKEN
           python src/train.py
 
       - name: Run tests

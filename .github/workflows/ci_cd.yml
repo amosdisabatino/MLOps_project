@@ -29,7 +29,6 @@ jobs:
       - name: Train And Upload Model On HuggingFace
         env:
           HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN} }
-        if: contains(steps.changed-files.outputs.all_changed_files, 'src/') || contains(steps.changed-files.outputs.all_changed_files, 'data/')
         run: |
           huggingface-cli login --token $HF_TOKEN
           python src/train.py

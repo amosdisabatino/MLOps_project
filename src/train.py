@@ -91,6 +91,7 @@ logger.info(f"Eval Metrics: {eval_metrics}")
 
 os.makedirs('models/finetuned_model', exist_ok=True)
 model.save_pretrained('models/finetuned_model')
+tokenizer.save_pretrained('models/finetuned_model')
 
 with open('models/finetuned_model/metrics.json', 'w') as f:
     json.dump({**metrics, **eval_metrics}, f, indent=4)

@@ -17,23 +17,25 @@ class TextInput(BaseModel):
 
 @app.post('/predict')
 def predict(review: TextInput):
+    """
+    This method to processes the data, sends it to the model and returns
+    the classification of the review in a python dictionary, then the result 
+    is saved in a csv file.
+    """
     result = analyze_sentiment(review.text)
 
-    with open(LOG_FILE, mode='a', newline='') as f:
-        writer = csv.writer(f)
-        if f.tell() == 0:
-            writer.writerow(['Timestrap', 'Text', 'Label', 'Confidence'])
-        writer.writerow([
-            datetime.now().isoformat(),
-            review.text,
-            result.get('label', ''),
-            result.get('confidence', 0.0)
-        ])
+    save_result_in_csv(result)
 
     return result
 
 @app.get('/metrics')
 def get_metrics():
+    """
+    This method compute the metrics for each category of the review ('positive'
+    or 'negative'):
+        - for each category compute the percentange of reviews on the total;
+        - and the number of predictions;
+    """
     if not os.path.exists(LOG_FILE):
         return {'message': "No Predictions Found."}
     
@@ -57,9 +59,25 @@ def get_metrics():
 
 @app.get("/data")
 def read_csv():
+    """
+    This method displays all the predictions made by the model and saved in 
+    its `csv` file.
+    """
     data = []
     with open(LOG_FILE, newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             data.append(row)
     return data
+
+def save_result_in_csv(result):
+    with open(LOG_FILE, mode='a', newline='') as f:
+        writer = csv.writer(f)
+        if f.tell() == 0:
+            writer.writerow(['Timestrap', 'Text', 'Label', 'Confidence'])
+        writer.writerow([
+            datetime.now().isoformat(),
+            review.text,
+            result.get('label', ''),
+            result.get('confidence', 0.0)
+        ])

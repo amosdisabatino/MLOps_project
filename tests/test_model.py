@@ -2,17 +2,15 @@ from src.model import analyze_sentiment
 
 def test_positive_sentence():
     review = (
-        "Very fast delivery. I ordered in the early afternoon and received it "
-        "the at evening which was amazing considering I didn’t expect it "
-        "until the next day. Amazing piece of kit, was super easy to install "
-        "and set up. Works very well, I’m not good with installation so this "
-        "was great for me, all pieces included including screws. Comes with "
-        "instructions on how to set up the app and WiFi etc. the "
-        "notifications make it easier for me to know if someone’s at my door "
-        "and great to speak to courier to leave parcel when I’m not home. "
-        "Feels secure and safe to have at my home and easy monitoring. Sound "
-        "quality and motion detection is great, you can even set in the app "
-        "how sensitive you want it too. Highly recommend."
+        "Amazon UK MAN1 is a very well-run and efficient warehouse. The site "
+        "is easy to reach with clear directions, and the check-in process is "
+        "smooth and well organised. Security is handled professionally, which "
+        "keeps everything running safely and on time."
+        "Staff are friendly, approachable, and always willing to assist, "
+        "which makes the experience much better. Parking and access are "
+        "straightforward, and the facility is kept clean and well managed."
+        "Overall, a professional and efficient site – great experience every "
+        "time."
     )
     result = analyze_sentiment(review)
     assert 'label' in result
@@ -20,8 +18,11 @@ def test_positive_sentence():
 
 def test_negative_sentence():
     review = (
-        "Dint receive the head wear and the cross,The size is not correct "
-        "either"
+        "Bunch of crooks at this place item arrived back there on the 28th "
+        "March have proof of delivery with a signature yet Amazon customer "
+        "service say the item hadn’t arrived back yet.Now chasing up a refund "
+        "for an £899 google pixel while some tea leaf is still working there "
+        "stealing other items."
     )
     result = analyze_sentiment(review)
     assert result['label'] == 'negative'

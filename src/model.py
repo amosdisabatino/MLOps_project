@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
 import torch.nn.functional as F
 
@@ -9,7 +9,14 @@ model = AutoModelForSequenceClassification.from_pretrained(model_name)
 
 def analyze_sentiment(text: str) -> dict:
     """
-    TODO
+    This method is used to predict the sentiment of the sentence received by
+    the client in `main.py`.
+    Returns a dictionary with the label of the sentiment predicted by the model
+    and and the probability value for the prediction.
+
+    :param: `text`: the sentence to classify.
+    :type: `text`: `str`
+    :return: `dict`
     """
     
     model.config.id2label = {0: 'negative', 1: 'positive'}

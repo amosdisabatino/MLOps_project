@@ -10,11 +10,14 @@ dependencies = [
     'accelerate>=0.26.0',
     'datasets',
     'evaluate',
+    'fastapi',
     'huggingface_hub',
+    'pydantic',
     'pytest',
     'scikit-learn',
     'torch',
     'transformers',
+    'uvicorn',
 ]
 
 [tool.setuptools.packages.find]

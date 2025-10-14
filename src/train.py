@@ -1,7 +1,10 @@
-import os
 import json
 import logging
-from datasets import load_dataset
+import os
+import torch
+from datasets import load_dataset, concatenate_datasets
+from evaluate import load
+from huggingface_hub import upload_folder
 from transformers import (
     AutoConfig,
     AutoTokenizer,
@@ -9,9 +12,6 @@ from transformers import (
     TrainingArguments,
     Trainer,
 )
-import torch
-from evaluate import load
-from huggingface_hub import upload_folder
 
 os.makedirs("logs", exist_ok=True)
 
@@ -31,15 +31,55 @@ logger.info("Loading IMDB Dataset...")
 dataset = load_dataset('imdb')
 
 logger.info("Loading Model...")
+
+# This part of code is used to download the pre-trainded model from
+# `huggingface` and its `tokenizer`, that it is used to convert the words in
+# numeric data, so that the model can work with them.
 model_name = 'cardiffnlp/twitter-roberta-base-sentiment-latest'
 tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# The `imdb` dataset has only two classes, it is necessary to force the model
+# to classify only two labels.
 config = AutoConfig.from_pretrained(model_name)
+config.num_labels = 2
 model = AutoModelForSequenceClassification.from_pretrained(
     model_name,
     num_labels=config.num_labels,
+    ignore_mismatched_sizes=True
 )
 
+train_data = dataset['train']
+test_data = dataset['test']
+
+def get_data_by_labels(datas, data_type, num_rec):
+    """
+    This method is used to get for each label (0 or 1) the right data from the
+    original dataset.
+    :param `datas`: the origin datasets (`train` or `test`)
+    :param `data_type`: a int variable used to search the data that have the
+    same value in the `label` field.
+    :param `num_rec`: the number of records to return.
+    """
+    return datas.filter(
+        lambda data: data['label'] == data_type
+    ).select(range(num_rec))
+
+train_negative = get_data_by_labels(train_data, 0, 1000)
+train_positive = get_data_by_labels(train_data, 1, 1000)
+test_negative = get_data_by_labels(test_data, 0, 250)
+test_positive = get_data_by_labels(test_data, 1, 250)
+
+train_set = concatenate_datasets([train_negative, train_positive])
+test_set = concatenate_datasets([test_negative, test_positive])
+
+train_set = train_set.shuffle(42)
+test_set = test_set.shuffle(42)
+
 def tokenize_function(datas):
+    """
+    This method converts the `text` of each record in the `datas` dataset in a
+    numerical data, so that the model can work with them.
+    """
     return tokenizer(
         datas['text'],
         truncation=True,
@@ -47,9 +87,8 @@ def tokenize_function(datas):
         max_length=128,
     )
 
-tokenized_dataset = dataset.map(tokenize_function, batched=True)
-train_dataset = tokenized_dataset['train'].shuffle(seed=42).select(range(2000))
-test_dataset = tokenized_dataset['test'].shuffle(seed=42).select(range(500))
+tokenized_train = train_set.map(tokenize_function, batched=True)
+tokenized_test = test_set.map(tokenize_function, batched=True)
 
 training_args = TrainingArguments(
     output_dir='./results',
@@ -68,6 +107,10 @@ training_args = TrainingArguments(
 accuracy = load('accuracy')
 
 def compute_metrics(eval_pred):
+    """
+    This method returns the metrics (E.X: `eval_accuracy` or `eval_loss`)
+    computed after the training/testing of the model.
+    """
     logits, labels = eval_pred
     predictions = torch.argmax(torch.tensor(logits), dim=-1)
     return accuracy.compute(predictions=predictions, references=labels)
@@ -75,8 +118,8 @@ def compute_metrics(eval_pred):
 trainer = Trainer(
     model=model,
     args=training_args,
-    train_dataset=train_dataset,
-    eval_dataset=test_dataset,
+    train_dataset=tokenized_train,
+    eval_dataset=tokenized_test,
     tokenizer=tokenizer,
     compute_metrics=compute_metrics
 )
@@ -90,11 +133,13 @@ logger.info("Evaluation Of The Model On Test Set...")
 eval_metrics = trainer.evaluate()
 logger.info(f"Eval Metrics: {eval_metrics}")
 
-os.makedirs('models/finetuned_model', exist_ok=True)
-model.save_pretrained('models/finetuned_model')
-tokenizer.save_pretrained('models/finetuned_model')
+base_path = 'models/finetuned_model'
 
-with open('models/finetuned_model/metrics.json', 'w') as f:
+os.makedirs(base_path, exist_ok=True)
+model.save_pretrained(base_path)
+tokenizer.save_pretrained(base_path)
+
+with open(base_path+'/metrics.json', 'w') as f:
     json.dump({**metrics, **eval_metrics}, f, indent=4)
 
 logger.info("Fine Tuning Completed, model saved successfully.")

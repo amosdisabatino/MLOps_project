@@ -8,6 +8,7 @@ COPY tests ./tests
 
 RUN pip install --upgrade pip
 RUN pip install .
-RUN python -c "from transformers import pipeline; pipeline('sentiment-analysis', model='cardiffnlp/twitter-roberta-base-sentiment-latest')"
 
-CMD ["python", "-m", "src.model"]
+EXPOSE 8000
+
+CMD ["uvicorn", "src.api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]

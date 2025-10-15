@@ -19,5 +19,5 @@ docker pull amosdisabatino/mlops_project
 ...then run it:
 
 ```
-docker run docker run -p 8000:8000 amosdisabatino/mlops_project
+docker run -p 8000:8000 amosdisabatino/mlops_project
 ```

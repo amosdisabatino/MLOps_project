@@ -24,7 +24,7 @@ def predict(review: TextInput):
     """
     result = analyze_sentiment(review.text)
 
-    save_result_in_csv(result)
+    save_result_in_csv(result, review)
 
     return result
 
@@ -70,7 +70,7 @@ def read_csv():
             data.append(row)
     return data
 
-def save_result_in_csv(result):
+def save_result_in_csv(result, review):
     with open(LOG_FILE, mode='a', newline='') as f:
         writer = csv.writer(f)
         if f.tell() == 0:

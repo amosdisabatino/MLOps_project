@@ -9,6 +9,7 @@ from transformers import (
     AutoConfig,
     AutoTokenizer,
     AutoModelForSequenceClassification,
+    EarlyStoppingCallback,
     TrainingArguments,
     Trainer,
 )
@@ -28,7 +29,9 @@ logger = logging.getLogger(__name__)
 logger.info("Fine Tuning Process")
 
 logger.info("Loading IMDB Dataset...")
-dataset = load_dataset('imdb')
+
+dataset = load_dataset('tweet_eval', 'sentiment')
+
 
 logger.info("Loading Model...")
 
@@ -38,10 +41,7 @@ logger.info("Loading Model...")
 model_name = 'cardiffnlp/twitter-roberta-base-sentiment-latest'
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-# The `imdb` dataset has only two classes, it is necessary to force the model
-# to classify only two labels.
 config = AutoConfig.from_pretrained(model_name)
-config.num_labels = 2
 model = AutoModelForSequenceClassification.from_pretrained(
     model_name,
     num_labels=config.num_labels,
@@ -50,10 +50,11 @@ model = AutoModelForSequenceClassification.from_pretrained(
 
 train_data = dataset['train']
 test_data = dataset['test']
+val_data = dataset['validation']
 
 def get_data_by_labels(datas, data_type, num_rec):
     """
-    This method is used to get for each label (0 or 1) the right data from the
+    This method is used to get for each label (0, 1, 2) the right data from the
     original dataset.
     :param `datas`: the origin datasets (`train` or `test`)
     :param `data_type`: a int variable used to search the data that have the
@@ -65,15 +66,25 @@ def get_data_by_labels(datas, data_type, num_rec):
     ).select(range(num_rec))
 
 train_negative = get_data_by_labels(train_data, 0, 1000)
-train_positive = get_data_by_labels(train_data, 1, 1000)
+train_neutral = get_data_by_labels(train_data, 1, 1000)
+train_positive = get_data_by_labels(train_data, 2, 1000)
 test_negative = get_data_by_labels(test_data, 0, 250)
-test_positive = get_data_by_labels(test_data, 1, 250)
+test_neutral = get_data_by_labels(test_data, 1, 250)
+test_positive = get_data_by_labels(test_data, 2, 250)
+val_negative = get_data_by_labels(val_data, 0, 250)
+val_neutral = get_data_by_labels(val_data, 1, 250)
+val_positive = get_data_by_labels(val_data, 2, 250)
 
-train_set = concatenate_datasets([train_negative, train_positive])
-test_set = concatenate_datasets([test_negative, test_positive])
+
+train_set = concatenate_datasets([
+    train_negative, train_neutral, train_positive
+])
+test_set = concatenate_datasets([test_negative, test_neutral, test_positive])
+val_set = concatenate_datasets([val_negative, val_neutral, val_positive])
 
 train_set = train_set.shuffle(42)
 test_set = test_set.shuffle(42)
+val_set = val_set.shuffle(42)
 
 def tokenize_function(datas):
     """
@@ -89,19 +100,22 @@ def tokenize_function(datas):
 
 tokenized_train = train_set.map(tokenize_function, batched=True)
 tokenized_test = test_set.map(tokenize_function, batched=True)
+tokenized_val = val_set.map(tokenize_function, batched=True)
 
 training_args = TrainingArguments(
     output_dir='./results',
     eval_strategy='epoch',
     save_strategy='epoch',
+    load_best_model_at_end=True,
+    metric_for_best_model='accuracy',
+    greater_is_better=True,
     learning_rate=2e-5,
     per_device_train_batch_size=8,
     per_device_eval_batch_size=8,
-    num_train_epochs=2,
+    num_train_epochs=6,
     weight_decay=0.01,
     logging_dir='./logs',
-    logging_strategy='steps',
-    logging_steps=50,
+    logging_strategy='epoch',
 )
 
 accuracy = load('accuracy')
@@ -119,9 +133,10 @@ trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=tokenized_train,
-    eval_dataset=tokenized_test,
+    eval_dataset=tokenized_val,
     tokenizer=tokenizer,
-    compute_metrics=compute_metrics
+    compute_metrics=compute_metrics,
+    callbacks=[EarlyStoppingCallback(early_stopping_patience=2)] 
 )
 
 logger.info("Start The Training Of The Model...")
@@ -130,7 +145,7 @@ metrics = train_result.metrics
 logger.info(f"Training Metrics: {metrics}")
 
 logger.info("Evaluation Of The Model On Test Set...")
-eval_metrics = trainer.evaluate()
+eval_metrics = trainer.evaluate(tokenized_test)
 logger.info(f"Eval Metrics: {eval_metrics}")
 
 base_path = 'models/finetuned_model'

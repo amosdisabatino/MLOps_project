@@ -74,7 +74,7 @@ def save_result_in_csv(result, review):
     with open(LOG_FILE, mode='a', newline='') as f:
         writer = csv.writer(f)
         if f.tell() == 0:
-            writer.writerow(['Timestrap', 'Text', 'Label', 'Confidence'])
+            writer.writerow(['Timestamp', 'Text', 'Label', 'Confidence'])
         writer.writerow([
             datetime.now().isoformat(),
             review.text,

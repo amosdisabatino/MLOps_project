@@ -2,6 +2,9 @@ import json
 import logging
 import os
 import torch
+from src.config import (
+    LABELS, NUM_RECS_TRAIN, NUM_RECS_TEST_VAL, MODEL_NAME, HF_REPO_DIR
+)
 from datasets import load_dataset, concatenate_datasets
 from evaluate import load
 from huggingface_hub import upload_folder
@@ -38,12 +41,11 @@ logger.info("Loading Model...")
 # This part of code is used to download the pre-trainded model from
 # `huggingface` and its `tokenizer`, that it is used to convert the words in
 # numeric data, so that the model can work with them.
-model_name = 'cardiffnlp/twitter-roberta-base-sentiment-latest'
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
-config = AutoConfig.from_pretrained(model_name)
+config = AutoConfig.from_pretrained(MODEL_NAME)
 model = AutoModelForSequenceClassification.from_pretrained(
-    model_name,
+    MODEL_NAME,
     num_labels=config.num_labels,
     ignore_mismatched_sizes=True
 )
@@ -65,15 +67,33 @@ def get_data_by_labels(datas, data_type, num_rec):
         lambda data: data['label'] == data_type
     ).select(range(num_rec))
 
-train_negative = get_data_by_labels(train_data, 0, 1000)
-train_neutral = get_data_by_labels(train_data, 1, 1000)
-train_positive = get_data_by_labels(train_data, 2, 1000)
-test_negative = get_data_by_labels(test_data, 0, 250)
-test_neutral = get_data_by_labels(test_data, 1, 250)
-test_positive = get_data_by_labels(test_data, 2, 250)
-val_negative = get_data_by_labels(val_data, 0, 250)
-val_neutral = get_data_by_labels(val_data, 1, 250)
-val_positive = get_data_by_labels(val_data, 2, 250)
+train_negative = get_data_by_labels(
+    train_data, LABELS.get('negative'), NUM_RECS_TRAIN
+)
+train_neutral = get_data_by_labels(
+    train_data, LABELS.get('neutral'), NUM_RECS_TRAIN
+)
+train_positive = get_data_by_labels(
+    train_data, LABELS.get('positive'), NUM_RECS_TRAIN
+)
+test_negative = get_data_by_labels(
+    test_data, LABELS.get('negative'), NUM_RECS_TEST_VAL
+)
+test_neutral = get_data_by_labels(
+    test_data, LABELS.get('neutral'), NUM_RECS_TEST_VAL
+)
+test_positive = get_data_by_labels(
+    test_data, LABELS.get('positive'), NUM_RECS_TEST_VAL
+)
+val_negative = get_data_by_labels(
+    val_data, LABELS.get('negative'), NUM_RECS_TEST_VAL
+)
+val_neutral = get_data_by_labels(
+    val_data, LABELS.get('neutral'), NUM_RECS_TEST_VAL
+)
+val_positive = get_data_by_labels(
+    val_data, LABELS.get('positive'), NUM_RECS_TEST_VAL
+)
 
 
 train_set = concatenate_datasets([
@@ -140,7 +160,7 @@ trainer = Trainer(
 )
 
 logger.info("Start The Training Of The Model...")
-train_result = trainer.train()
+train_result = trainer.train(resume_from_checkpoint=True)
 metrics = train_result.metrics
 logger.info(f"Training Metrics: {metrics}")
 
@@ -162,7 +182,7 @@ logger.info("Fine Tuning Completed, model saved successfully.")
 logger.info("Upload The Model On HuggingFace...")
 
 upload_folder(
-    repo_id="DiSabatino/mlops-sentiment-model",
+    repo_id=HF_REPO_DIR,
     folder_path="models/finetuned_model",
     repo_type="model",
 )

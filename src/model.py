@@ -18,9 +18,6 @@ def analyze_sentiment(text: str) -> dict:
     :type: `text`: `str`
     :return: `dict`
     """
-    
-    model.config.id2label = {0: 'negative', 1: 'positive'}
-    model.config.label2id = {'negative': 0, 'positive': 1}
 
     inputs = tokenizer(
         text,

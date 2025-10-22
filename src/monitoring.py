@@ -1,58 +1,141 @@
 import pandas as pd
-from evidently import Report
-from evidently.presets import DataDriftPreset, ClassificationPreset
+import logging
+import os
 import json
 from datetime import datetime
-from src.config import REFERENCE_PATH, CURRENT_PATH, REPORT_PATH, METRICS_JSON
+from src.config import CURRENT_PATH, LABELS, REF_STATS_FILE, OUTPUT_REPORT
+import subprocess
+import sys
 
-TARGET_COLUMN = "label"                # nome della colonna target
-PRED_COLUMN = "prediction"             # nome della colonna delle predizioni
+os.makedirs(os.path.dirname(OUTPUT_REPORT), exist_ok=True)
 
-# === 1. Carica dati ===
-reference = pd.read_csv(REFERENCE_PATH)
-current = pd.read_csv(CURRENT_PATH)
+os.makedirs("logs", exist_ok=True)
 
-# assicurati che le colonne coincidano
-common_cols = list(set(reference.columns) & set(current.columns))
-reference = reference[common_cols]
-current = current[common_cols]
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler('logs/monitoring.log'),
+        logging.StreamHandler()
+    ]
+)
 
-# === 2. Crea il report Evidently ===
-report = Report(metrics=[
-    DataDriftPreset(),           # analisi del data drift
-    ClassificationPreset()       # metriche di performance (accuracy, precision, recall, ecc.)
-])
+logger = logging.getLogger(__name__)
 
-report.run(reference_data=reference, current_data=current)
 
-# === 3. Salva il report HTML ===
-report.save_html(REPORT_PATH)
+def load_log():
+    df = pd.read_csv(CURRENT_PATH, parse_dates=['Timestamp'])
+    df['Label'] = df['Label'].map(LABELS)
+    return df
 
-# === 4. Esporta metriche principali per alert semplificato ===
-result = report.as_dict()
 
-# estrai metriche sintetiche
-data_drift = result["metrics"][0]["result"]["dataset_drift"]
-n_drifted_features = result["metrics"][0]["result"]["number_of_drifted_columns"]
-accuracy_ref = result["metrics"][1]["result"]["reference_metrics"]["accuracy"]
-accuracy_cur = result["metrics"][1]["result"]["current_metrics"]["accuracy"]
+def compute_current_stats(df):
+    stats = {}
+    stats['count'] = len(df)
+    stats['mean_confidence'] = df['Confidence'].mean()
+    stats['pred_dist'] = df['Label'].value_counts(normalize=True).to_dict()
+    return stats
 
-summary = {
-    "timestamp": datetime.now().isoformat(),
-    "data_drift_detected": data_drift,
-    "n_drifted_features": n_drifted_features,
-    "accuracy_reference": accuracy_ref,
-    "accuracy_current": accuracy_cur,
-    "accuracy_drop": round(accuracy_ref - accuracy_cur, 4)
-}
 
-with open(METRICS_JSON, "w") as f:
-    json.dump(summary, f, indent=2)
+def load_reference_stats():
+    if os.path.exists(REF_STATS_FILE):
+        return json.load(open(REF_STATS_FILE))
+    else:
+        return None
 
-print("✅ Monitoring report salvato in:", REPORT_PATH)
-print("📊 Metriche riassuntive:")
-print(json.dumps(summary, indent=2))
 
-# === 5. (Facoltativo) Semplice alert in console ===
-if summary["data_drift_detected"] or summary["accuracy_drop"] > 0.05:
-    print("⚠️  ATTENZIONE: rilevato drift o degrado delle performance!")
+def compare_stats(
+    ref,
+    curr,
+    data_threshold=1,
+    threshold_conf=0.7,
+    threshold_dist_change=0.2,
+):
+    alerts = []
+    if curr['count'] >= data_threshold:
+        if curr['mean_confidence'] < threshold_conf:
+            alerts.append(
+                f'Mean confidence {curr['mean_confidence']:.3f} '
+                f'below threshold {threshold_conf}'
+            )
+        if ref:
+            for label, frac in curr["pred_dist"].items():
+                ref_frac = ref["pred_dist"].get(label, 0)
+                if ref_frac and abs(frac - ref_frac) > threshold_dist_change:
+                    alerts.append(
+                        f'Predicted class {label} fraction changed from '
+                        f'{ref_frac:.3f} to {frac:.3f}'
+                    )
+                else:
+                    logger.info(
+                        f'No significant change for class {label}: '
+                        f'{ref_frac:.3f} to {frac:.3f}'
+                    )
+    else:
+        logger.info(
+            f'Not enough data for monitoring: {curr["count"]} records '
+            f'found, {data_threshold} required.'
+        )
+    return alerts
+
+
+def save_current_as_reference(curr):
+    with open(REF_STATS_FILE, "w") as f:
+        json.dump(curr, f)
+
+
+def start_training():
+    train_script = os.path.join("src", "train.py")
+    if os.path.exists(train_script):
+        try:
+            logger.info(
+                'Alerts detected — launching training script: '
+                f'{train_script}'
+            )
+            subprocess.run(
+                [sys.executable, train_script],
+                check=True,
+            )
+            logger.info('Training script finished successfully.')
+        except subprocess.CalledProcessError as e:
+            logger.exception(
+                f'Training script exited with non-zero status: {e}'
+            )
+        except Exception as e:
+            logger.exception(f'Failed to run training script: {e}')
+    else:
+        logger.error(f'Training script not found at {train_script}')
+
+
+def main():
+
+    logger.info('Starting Monitoring Process...')
+
+    df = load_log()
+    curr = compute_current_stats(df)
+    ref = load_reference_stats()
+
+    report = {
+        "timestamp": datetime.now().isoformat(),
+        "current_stats": curr,
+        "reference_stats": ref,
+    }
+
+    alerts = compare_stats(ref, curr)
+    report['alerts'] = alerts
+
+    with open(OUTPUT_REPORT, "w") as f:
+        json.dump(report, f, indent=2)
+    logger.info(f'Report: {json.dumps(report, indent=2)}')
+
+    if alerts and ref:
+        start_training()
+
+    # if ref not exists, save the first one as reference
+    if ref is None:
+        save_current_as_reference(curr)
+        logger.info('Reference stats initialized.')
+
+
+if __name__ == "__main__":
+    main()

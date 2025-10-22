@@ -4,8 +4,15 @@ import os
 import torch
 from huggingface_hub import hf_hub_download
 from src.config import (
+    BATCH_SIZE,
+    TRAIN_EPOCHS,
     BASE_PATH,
-    LABELS, NUM_RECS_TRAIN, NUM_RECS_TEST_VAL, MODEL_NAME, HF_REPO_DIR
+    LABELS,
+    NUM_RECS_TRAIN,
+    NUM_RECS_TEST_VAL,
+    MODEL_NAME,
+    HF_REPO_DIR,
+    DATASET_NAME,
 )
 from datasets import load_dataset, concatenate_datasets
 from evaluate import load
@@ -35,7 +42,7 @@ logger.info("Fine Tuning Process")
 
 logger.info("Loading Tweet Dataset...")
 
-dataset = load_dataset('tweet_eval', 'sentiment')
+dataset = load_dataset(DATASET_NAME, 'sentiment')
 
 
 logger.info("Loading Model...")
@@ -56,6 +63,7 @@ train_data = dataset['train']
 test_data = dataset['test']
 val_data = dataset['validation']
 
+
 def get_data_by_labels(datas, data_type, num_rec):
     """
     This method is used to get for each label (0, 1, 2) the right data from the
@@ -65,9 +73,10 @@ def get_data_by_labels(datas, data_type, num_rec):
     same value in the `label` field.
     :param `num_rec`: the number of records to return.
     """
-    return datas.filter(
+    return datas.shuffle(42).filter(
         lambda data: data['label'] == data_type
     ).select(range(num_rec))
+
 
 train_negative = get_data_by_labels(
     train_data, LABELS.get('negative'), NUM_RECS_TRAIN
@@ -108,6 +117,7 @@ train_set = train_set.shuffle(42)
 test_set = test_set.shuffle(42)
 val_set = val_set.shuffle(42)
 
+
 def tokenize_function(datas):
     """
     This method converts the `text` of each record in the `datas` dataset in a
@@ -119,6 +129,7 @@ def tokenize_function(datas):
         padding='max_length',
         max_length=128,
     )
+
 
 tokenized_train = train_set.map(tokenize_function, batched=True)
 tokenized_test = test_set.map(tokenize_function, batched=True)
@@ -132,9 +143,9 @@ training_args = TrainingArguments(
     metric_for_best_model='accuracy',
     greater_is_better=True,
     learning_rate=2e-5,
-    per_device_train_batch_size=8,
-    per_device_eval_batch_size=8,
-    num_train_epochs=6,
+    per_device_train_batch_size=BATCH_SIZE,
+    per_device_eval_batch_size=BATCH_SIZE,
+    num_train_epochs=TRAIN_EPOCHS,
     weight_decay=0.01,
     logging_dir='./logs',
     logging_strategy='epoch',
@@ -143,6 +154,7 @@ training_args = TrainingArguments(
 )
 
 accuracy = load('accuracy')
+
 
 def compute_metrics(eval_pred):
     """
@@ -153,6 +165,7 @@ def compute_metrics(eval_pred):
     predictions = torch.argmax(torch.tensor(logits), dim=-1)
     return accuracy.compute(predictions=predictions, references=labels)
 
+
 trainer = Trainer(
     model=model,
     args=training_args,
@@ -160,11 +173,11 @@ trainer = Trainer(
     eval_dataset=tokenized_val,
     tokenizer=tokenizer,
     compute_metrics=compute_metrics,
-    callbacks=[EarlyStoppingCallback(early_stopping_patience=2)] 
+    callbacks=[EarlyStoppingCallback(early_stopping_patience=2)]
 )
 
 logger.info("Start The Training Of The Model...")
-train_result = trainer.train(resume_from_checkpoint=True)
+train_result = trainer.train()
 metrics = train_result.metrics
 logger.info(f"Training Metrics: {metrics}")
 

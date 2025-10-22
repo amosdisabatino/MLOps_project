@@ -3,23 +3,25 @@ from pydantic import BaseModel
 from src.model import analyze_sentiment
 from datetime import datetime
 from collections import Counter
+from src.config import CURRENT_PATH
 
 import csv
 import os
 
 app = FastAPI(title="Sentiment Analysis API")
 
-LOG_FILE = 'logs/predictions.csv'
-os.makedirs('logs', exist_ok=True)
+os.makedirs('data', exist_ok=True)
+
 
 class TextInput(BaseModel):
     text: str
+
 
 @app.post('/predict')
 def predict(review: TextInput):
     """
     This method to processes the data, sends it to the model and returns
-    the classification of the review in a python dictionary, then the result 
+    the classification of the review in a python dictionary, then the result
     is saved in a csv file.
     """
     result = analyze_sentiment(review.text)
@@ -27,6 +29,7 @@ def predict(review: TextInput):
     save_result_in_csv(result, review)
 
     return result
+
 
 @app.get('/metrics')
 def get_metrics():
@@ -36,11 +39,11 @@ def get_metrics():
         - for each category compute the percentange of reviews on the total;
         - and the number of predictions;
     """
-    if not os.path.exists(LOG_FILE):
+    if not os.path.exists(CURRENT_PATH):
         return {'message': "No Predictions Found."}
-    
+
     labels = []
-    with open(LOG_FILE, newline='') as f:
+    with open(CURRENT_PATH, newline='') as f:
         reader = csv.DictReader(f)
         for row in reader:
             labels.append(row['Label'])
@@ -57,21 +60,23 @@ def get_metrics():
         'distribution': metrics,
     }
 
+
 @app.get("/data")
 def read_csv():
     """
-    This method displays all the predictions made by the model and saved in 
+    This method displays all the predictions made by the model and saved in
     its `csv` file.
     """
     data = []
-    with open(LOG_FILE, newline="") as csvfile:
+    with open(CURRENT_PATH, newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             data.append(row)
     return data
 
+
 def save_result_in_csv(result, review):
-    with open(LOG_FILE, mode='a', newline='') as f:
+    with open(CURRENT_PATH, mode='a', newline='') as f:
         writer = csv.writer(f)
         if f.tell() == 0:
             writer.writerow(['Timestamp', 'Text', 'Label', 'Confidence'])

@@ -6,6 +6,7 @@ import torch.nn.functional as F
 tokenizer = AutoTokenizer.from_pretrained(HF_REPO_DIR)
 model = AutoModelForSequenceClassification.from_pretrained(HF_REPO_DIR)
 
+
 def analyze_sentiment(text: str) -> dict:
     """
     This method is used to predict the sentiment of the sentence received by
@@ -27,7 +28,7 @@ def analyze_sentiment(text: str) -> dict:
 
     with torch.no_grad():
         outputs = model(**inputs)
-    
+
     probs = F.softmax(outputs.logits, dim=-1)
 
     pred_id = torch.argmax(probs, dim=-1).item()

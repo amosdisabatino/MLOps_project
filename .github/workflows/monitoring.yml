@@ -1,8 +1,8 @@
-name: Training And Uploading Model In HuggingFace
+name: Checking Model And Train If Needed
 
 on:
   schedule:
-    - cron: "0 0 * * 4"
+    - cron: "0 0 * * 0"
 
 jobs:
 

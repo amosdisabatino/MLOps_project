@@ -1,11 +1,10 @@
+from src.config import HF_REPO_DIR
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
 import torch.nn.functional as F
 
-model_name = 'DiSabatino/mlops-sentiment-model'
-
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSequenceClassification.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(HF_REPO_DIR)
+model = AutoModelForSequenceClassification.from_pretrained(HF_REPO_DIR)
 
 def analyze_sentiment(text: str) -> dict:
     """

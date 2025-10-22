@@ -4,10 +4,13 @@ on:
   pull_request:
     types:
       - closed
+  schedule:
+    - cron: "0 0 * * 0"
+
 
 jobs:
 
-  if_merged:
+  Update And Upload The Model:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 

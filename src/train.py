@@ -2,7 +2,9 @@ import json
 import logging
 import os
 import torch
+from huggingface_hub import hf_hub_download
 from src.config import (
+    BASE_PATH,
     LABELS, NUM_RECS_TRAIN, NUM_RECS_TEST_VAL, MODEL_NAME, HF_REPO_DIR
 )
 from datasets import load_dataset, concatenate_datasets
@@ -31,7 +33,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.info("Fine Tuning Process")
 
-logger.info("Loading IMDB Dataset...")
+logger.info("Loading Tweet Dataset...")
 
 dataset = load_dataset('tweet_eval', 'sentiment')
 
@@ -136,6 +138,8 @@ training_args = TrainingArguments(
     weight_decay=0.01,
     logging_dir='./logs',
     logging_strategy='epoch',
+    save_total_limit=2,
+    save_on_each_node=False,
 )
 
 accuracy = load('accuracy')
@@ -168,23 +172,49 @@ logger.info("Evaluation Of The Model On Test Set...")
 eval_metrics = trainer.evaluate(tokenized_test)
 logger.info(f"Eval Metrics: {eval_metrics}")
 
-base_path = 'models/finetuned_model'
+os.makedirs(BASE_PATH, exist_ok=True)
+model.save_pretrained(BASE_PATH)
+tokenizer.save_pretrained(BASE_PATH)
 
-os.makedirs(base_path, exist_ok=True)
-model.save_pretrained(base_path)
-tokenizer.save_pretrained(base_path)
-
-with open(base_path+'/metrics.json', 'w') as f:
+with open(BASE_PATH+'/metrics.json', 'w') as f:
     json.dump({**metrics, **eval_metrics}, f, indent=4)
 
 logger.info("Fine Tuning Completed, model saved successfully.")
 
 logger.info("Upload The Model On HuggingFace...")
 
-upload_folder(
-    repo_id=HF_REPO_DIR,
-    folder_path="models/finetuned_model",
-    repo_type="model",
-)
+try:
+    old_metrics_path =\
+        hf_hub_download(repo_id=HF_REPO_DIR, filename='metrics.json')
+except Exception:
+    old_metrics_path = False
 
-logger.info("Upload Complete.")
+old_accuracy = 0
+if old_metrics_path:
+
+    with open(old_metrics_path) as f:
+        old_metrics = json.load(f)
+
+    old_accuracy = old_metrics.get('eval_accuracy', 0)
+
+new_accuracy = eval_metrics.get('eval_accuracy', 0)
+
+
+if not old_accuracy:
+    upload = True
+elif old_accuracy and new_accuracy > old_accuracy:
+    upload = True
+else:
+    upload = False
+
+logger.info(f"Old Accuracy: {old_accuracy} , New Accuracy: {new_accuracy}")
+
+if upload:
+    upload_folder(
+        repo_id=HF_REPO_DIR,
+        folder_path=BASE_PATH,
+        repo_type="model",
+    )
+    logger.info("Upload Complete.")
+else:
+    logger.info("New non-performing model, upload blocked.")

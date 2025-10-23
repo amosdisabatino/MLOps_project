@@ -57,7 +57,9 @@ def get_metrics():
     counts = Counter(labels)
     total = sum(counts.values())
 
-    metrics = {label: round(count / total * 100, 2) for label, count in counts.items()}
+    metrics = {
+        label: round(count / total * 100, 2) for label, count in counts.items()
+    }
 
     return {
         "total_predictions": total,

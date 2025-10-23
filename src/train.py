@@ -71,11 +71,8 @@ def get_data_by_labels(datas, data_type, num_rec):
     same value in the `label` field.
     :param `num_rec`: the number of records to return.
     """
-    return (
-        datas.shuffle(42)
-        .filter(lambda data: data["label"] == data_type)
-        .select(range(num_rec))
-    )
+    filter_datas = datas.filter(lambda data: data["label"] == data_type)
+    return filter_datas.shuffle(42).select(range(num_rec))
 
 
 train_negative = get_data_by_labels(
@@ -134,6 +131,12 @@ tokenized_train = train_set.map(tokenize_function, batched=True)
 tokenized_test = test_set.map(tokenize_function, batched=True)
 tokenized_val = val_set.map(tokenize_function, batched=True)
 
+# In this part of code is defined the `TrainingArguments`, that is used to set
+# all the parameters needed for the training of the model.
+# For example the number of epochs, the batch size, the learning rate.
+# In `results` are saved all the checkpoint of the model, but are keept only
+# the last 2. The best model is chosen based on the accuracy metric.
+
 training_args = TrainingArguments(
     output_dir="./results",
     eval_strategy="epoch",
@@ -163,6 +166,12 @@ def compute_metrics(eval_pred):
     logits, labels = eval_pred
     predictions = torch.argmax(torch.tensor(logits), dim=-1)
     return accuracy.compute(predictions=predictions, references=labels)
+
+# In the `Trainer` is defined the training loop of the model, passing all the
+# parameters needed for the training, also the parmeters defined in the
+# `TrainingArguments`.
+# It is used the `EarlyStoppingCallback` to stop the training if the model
+# does not improve after 2 epochs.
 
 
 trainer = Trainer(
@@ -201,6 +210,10 @@ try:
     )
 except Exception:
     old_metrics_path = False
+
+# This part of code is used to compare the accuracy of the old model with
+# the new one, if the new model has a better accuracy than the old one, then
+# it is uploaded on `huggingface`, otherwise the upload is blocked.
 
 old_accuracy = 0
 if old_metrics_path:

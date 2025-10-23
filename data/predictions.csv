@@ -1,0 +1,16 @@
+Timestamp,Text,Label,Confidence
+2025-10-22T15:19:12.092617,,neutral,0.4998886287212372
+2025-10-22T15:19:26.216483,This company is good,positive,0.999484658241272
+2025-10-22T15:19:31.099478,This company is ok,positive,0.9062495231628418
+2025-10-22T15:19:40.813819,This company is not bad and not good,negative,0.9716984033584595
+2025-10-22T15:19:51.063467,This company is very bad,negative,0.9997010231018066
+2025-10-22T15:19:56.894699,This company is ok,positive,0.9062495231628418
+2025-10-22T15:20:03.267453,This company is less ok,negative,0.9997207522392273
+2025-10-22T15:21:15.606237,I go to this company,negative,0.9992996454238892
+2025-10-22T15:21:37.574163,Foreign commentator award at the #commentawards goes to the late Marie Colvin of the Sunday Times,neutral,0.999649167060852
+2025-10-22T15:21:57.139226,Who are going to this company?,neutral,0.9975736737251282
+2025-10-23T09:21:43.534682,Who are going to this company?,neutral,0.9975736737251282
+2025-10-23T09:21:58.101863,I dont' like this comapny,negative,0.9997590184211731
+2025-10-23T09:22:09.313348,This company is bad,negative,0.9996864795684814
+2025-10-23T09:22:16.598835,This company is worse,negative,0.9996719360351562
+2025-10-23T09:22:21.963574,This company is good,positive,0.999484658241272

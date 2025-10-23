@@ -10,4 +10,3 @@ models/
 *.safetensors
 *.ckpt
 monitoring/
-data/predictions.csv

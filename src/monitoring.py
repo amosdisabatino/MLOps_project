@@ -47,7 +47,7 @@ def load_reference_stats():
 def compare_stats(
     ref,
     curr,
-    data_threshold=1,
+    data_threshold=100,
     threshold_conf=0.7,
     threshold_dist_change=0.2,
 ):
@@ -60,7 +60,7 @@ def compare_stats(
             )
         if ref:
             for label, frac in curr["pred_dist"].items():
-                ref_frac = ref["pred_dist"].get(label, 0)
+                ref_frac = ref["pred_dist"].get(str(label), 0)
                 if ref_frac and abs(frac - ref_frac) > threshold_dist_change:
                     alerts.append(
                         f'Predicted class {label} fraction changed from '

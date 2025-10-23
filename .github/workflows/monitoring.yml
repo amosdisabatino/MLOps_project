@@ -1,35 +1,34 @@
-name: Training And Uploading Model In HuggingFace
+name: Checking Model And Train If Needed
 
 on:
-  pull_request:
-    types:
-      - closed
+  schedule:
+    - cron: "0 0 * * 0"
 
 jobs:
 
-  Update And Upload The Model:
-    if: github.event.pull_request.merged == true
+  weekly_run:
+
     runs-on: ubuntu-latest
-
+  
     steps:
-
+  
       - name: Checkout repository
         uses: actions/checkout@v3
-
+  
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-
+  
       - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -e .
           pip install pytest
 
-      - name: Train And Upload Model On HuggingFace
+      - name: Check Model And Train If Needed
         env:
           HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
         run: |
           huggingface-cli login --token $HF_TOKEN
-          python src/train.py
+          python src/monitoring.py

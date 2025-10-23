@@ -14,3 +14,5 @@ Timestamp,Text,Label,Confidence
 2025-10-23T09:22:09.313348,This company is bad,negative,0.9996864795684814
 2025-10-23T09:22:16.598835,This company is worse,negative,0.9996719360351562
 2025-10-23T09:22:21.963574,This company is good,positive,0.999484658241272
+2025-10-23T16:00:37.772790,I love this company!,positive,0.9995667338371277
+2025-10-23T16:02:00.459291,I love this company!,positive,0.9995667338371277

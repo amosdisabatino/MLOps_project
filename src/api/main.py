@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 from src.model import analyze_sentiment
 from datetime import datetime
 from collections import Counter
@@ -14,7 +14,10 @@ os.makedirs("data", exist_ok=True)
 
 
 class TextInput(BaseModel):
-    text: str
+    text: str = Field(
+        min_lenght=1,
+        max_length=512,
+    )
 
     @field_validator("text")
     def text_not_empty(cls, v):

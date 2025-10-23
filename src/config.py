@@ -1,7 +1,7 @@
 LABELS = {
-    'negative': 0,
-    'neutral': 1,
-    'positive': 2,
+    "negative": 0,
+    "neutral": 1,
+    "positive": 2,
 }
 
 NUM_RECS_TRAIN = 2000
@@ -12,22 +12,22 @@ BATCH_SIZE = 8
 
 TRAIN_EPOCHS = 20
 
-DATASET_NAME = 'tweet_eval'
+DATASET_NAME = "tweet_eval"
 
-BASE_PATH = 'models/finetuned_model'
+BASE_PATH = "models/finetuned_model"
 
-MODEL_NAME = 'cardiffnlp/twitter-roberta-base-sentiment-latest'
+MODEL_NAME = "cardiffnlp/twitter-roberta-base-sentiment-latest"
 
-HF_REPO_DIR = 'DiSabatino/mlops-sentiment-model'
+HF_REPO_DIR = "DiSabatino/mlops-sentiment-model"
 
-REFERENCE_PATH = 'data/train.csv'
+REFERENCE_PATH = "data/train.csv"
 
-CURRENT_PATH = 'data/predictions.csv'
+CURRENT_PATH = "data/predictions.csv"
 
-REPORT_PATH = 'reports/monitoring_report.html'
+REPORT_PATH = "reports/monitoring_report.html"
 
-METRICS_JSON = 'reports/metrics_summary.json'
+METRICS_JSON = "reports/metrics_summary.json"
 
-REF_STATS_FILE = 'monitoring/ref_stats.json'
+REF_STATS_FILE = "monitoring/ref_stats.json"
 
-OUTPUT_REPORT = 'monitoring/no_label_monitoring_report.json'
+OUTPUT_REPORT = "monitoring/no_label_monitoring_report.json"

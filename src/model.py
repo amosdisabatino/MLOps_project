@@ -21,7 +21,7 @@ def analyze_sentiment(text: str) -> dict:
 
     inputs = tokenizer(
         text,
-        return_tensors='pt',
+        return_tensors="pt",
         truncation=True,
         padding=True,
     )
@@ -35,7 +35,4 @@ def analyze_sentiment(text: str) -> dict:
     labels = model.config.id2label
     label = labels[pred_id] if labels else str(pred_id)
 
-    return {
-        'label': label,
-        'confidence': probs[0][pred_id].item()
-    }
+    return {"label": label, "confidence": probs[0][pred_id].item()}

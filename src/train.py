@@ -33,8 +33,8 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.FileHandler("logs/training.log"),
-        logging.StreamHandler()
-    ]
+        logging.StreamHandler(),
+    ],
 )
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ logger.info("Fine Tuning Process")
 
 logger.info("Loading Tweet Dataset...")
 
-dataset = load_dataset(DATASET_NAME, 'sentiment')
+dataset = load_dataset(DATASET_NAME, "sentiment")
 
 
 logger.info("Loading Model...")
@@ -54,14 +54,12 @@ tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 config = AutoConfig.from_pretrained(MODEL_NAME)
 model = AutoModelForSequenceClassification.from_pretrained(
-    MODEL_NAME,
-    num_labels=config.num_labels,
-    ignore_mismatched_sizes=True
+    MODEL_NAME, num_labels=config.num_labels, ignore_mismatched_sizes=True
 )
 
-train_data = dataset['train']
-test_data = dataset['test']
-val_data = dataset['validation']
+train_data = dataset["train"]
+test_data = dataset["test"]
+val_data = dataset["validation"]
 
 
 def get_data_by_labels(datas, data_type, num_rec):
@@ -73,39 +71,40 @@ def get_data_by_labels(datas, data_type, num_rec):
     same value in the `label` field.
     :param `num_rec`: the number of records to return.
     """
-    return datas.shuffle(42).filter(
-        lambda data: data['label'] == data_type
-    ).select(range(num_rec))
+    return (
+        datas.shuffle(42)
+        .filter(lambda data: data["label"] == data_type)
+        .select(range(num_rec))
+    )
 
 
 train_negative = get_data_by_labels(
-    train_data, LABELS.get('negative'), NUM_RECS_TRAIN
+    train_data, LABELS.get("negative"), NUM_RECS_TRAIN
 )
 train_neutral = get_data_by_labels(
-    train_data, LABELS.get('neutral'), NUM_RECS_TRAIN
+    train_data, LABELS.get("neutral"), NUM_RECS_TRAIN
 )
 train_positive = get_data_by_labels(
-    train_data, LABELS.get('positive'), NUM_RECS_TRAIN
+    train_data, LABELS.get("positive"), NUM_RECS_TRAIN
 )
 test_negative = get_data_by_labels(
-    test_data, LABELS.get('negative'), NUM_RECS_TEST_VAL
+    test_data, LABELS.get("negative"), NUM_RECS_TEST_VAL
 )
 test_neutral = get_data_by_labels(
-    test_data, LABELS.get('neutral'), NUM_RECS_TEST_VAL
+    test_data, LABELS.get("neutral"), NUM_RECS_TEST_VAL
 )
 test_positive = get_data_by_labels(
-    test_data, LABELS.get('positive'), NUM_RECS_TEST_VAL
+    test_data, LABELS.get("positive"), NUM_RECS_TEST_VAL
 )
 val_negative = get_data_by_labels(
-    val_data, LABELS.get('negative'), NUM_RECS_TEST_VAL
+    val_data, LABELS.get("negative"), NUM_RECS_TEST_VAL
 )
 val_neutral = get_data_by_labels(
-    val_data, LABELS.get('neutral'), NUM_RECS_TEST_VAL
+    val_data, LABELS.get("neutral"), NUM_RECS_TEST_VAL
 )
 val_positive = get_data_by_labels(
-    val_data, LABELS.get('positive'), NUM_RECS_TEST_VAL
+    val_data, LABELS.get("positive"), NUM_RECS_TEST_VAL
 )
-
 
 train_set = concatenate_datasets([
     train_negative, train_neutral, train_positive
@@ -124,9 +123,9 @@ def tokenize_function(datas):
     numerical data, so that the model can work with them.
     """
     return tokenizer(
-        datas['text'],
+        datas["text"],
         truncation=True,
-        padding='max_length',
+        padding="max_length",
         max_length=128,
     )
 
@@ -136,24 +135,24 @@ tokenized_test = test_set.map(tokenize_function, batched=True)
 tokenized_val = val_set.map(tokenize_function, batched=True)
 
 training_args = TrainingArguments(
-    output_dir='./results',
-    eval_strategy='epoch',
-    save_strategy='epoch',
+    output_dir="./results",
+    eval_strategy="epoch",
+    save_strategy="epoch",
     load_best_model_at_end=True,
-    metric_for_best_model='accuracy',
+    metric_for_best_model="accuracy",
     greater_is_better=True,
     learning_rate=2e-5,
     per_device_train_batch_size=BATCH_SIZE,
     per_device_eval_batch_size=BATCH_SIZE,
     num_train_epochs=TRAIN_EPOCHS,
     weight_decay=0.01,
-    logging_dir='./logs',
-    logging_strategy='epoch',
+    logging_dir="./logs",
+    logging_strategy="epoch",
     save_total_limit=2,
     save_on_each_node=False,
 )
 
-accuracy = load('accuracy')
+accuracy = load("accuracy")
 
 
 def compute_metrics(eval_pred):
@@ -173,7 +172,7 @@ trainer = Trainer(
     eval_dataset=tokenized_val,
     tokenizer=tokenizer,
     compute_metrics=compute_metrics,
-    callbacks=[EarlyStoppingCallback(early_stopping_patience=2)]
+    callbacks=[EarlyStoppingCallback(early_stopping_patience=2)],
 )
 
 logger.info("Start The Training Of The Model...")
@@ -189,7 +188,7 @@ os.makedirs(BASE_PATH, exist_ok=True)
 model.save_pretrained(BASE_PATH)
 tokenizer.save_pretrained(BASE_PATH)
 
-with open(BASE_PATH+'/metrics.json', 'w') as f:
+with open(BASE_PATH + "/metrics.json", "w") as f:
     json.dump({**metrics, **eval_metrics}, f, indent=4)
 
 logger.info("Fine Tuning Completed, model saved successfully.")
@@ -197,20 +196,19 @@ logger.info("Fine Tuning Completed, model saved successfully.")
 logger.info("Upload The Model On HuggingFace...")
 
 try:
-    old_metrics_path =\
-        hf_hub_download(repo_id=HF_REPO_DIR, filename='metrics.json')
+    old_metrics_path = hf_hub_download(
+        repo_id=HF_REPO_DIR, filename="metrics.json"
+    )
 except Exception:
     old_metrics_path = False
 
 old_accuracy = 0
 if old_metrics_path:
-
     with open(old_metrics_path) as f:
         old_metrics = json.load(f)
+    old_accuracy = old_metrics.get("eval_accuracy", 0)
 
-    old_accuracy = old_metrics.get('eval_accuracy', 0)
-
-new_accuracy = eval_metrics.get('eval_accuracy', 0)
+new_accuracy = eval_metrics.get("eval_accuracy", 0)
 
 
 if not old_accuracy:

@@ -1,5 +1,6 @@
 from src.model import analyze_sentiment
 
+
 def test_positive_sentence():
     review = (
         "Amazon UK MAN1 is a very well-run and efficient warehouse. The site "
@@ -13,8 +14,9 @@ def test_positive_sentence():
         "time."
     )
     result = analyze_sentiment(review)
-    assert 'label' in result
-    assert result['label'] == 'positive'
+    assert "label" in result
+    assert result["label"] == "positive"
+
 
 def test_negative_sentence():
     review = (
@@ -25,4 +27,4 @@ def test_negative_sentence():
         "stealing other items."
     )
     result = analyze_sentiment(review)
-    assert result['label'] == 'negative'
+    assert result["label"] == "negative"

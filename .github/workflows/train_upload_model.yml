@@ -7,7 +7,7 @@ on:
 
 jobs:
 
-  Update And Upload The Model:
+  update_and_upload_the_model:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 

@@ -3,8 +3,13 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
 import torch.nn.functional as F
 
-tokenizer = AutoTokenizer.from_pretrained(HF_REPO_DIR)
-model = AutoModelForSequenceClassification.from_pretrained(HF_REPO_DIR)
+try:
+    tokenizer = AutoTokenizer.from_pretrained(HF_REPO_DIR)
+    model = AutoModelForSequenceClassification.from_pretrained(HF_REPO_DIR)
+except Exception as e:
+    raise RuntimeError(
+        f"Error loading model or tokenizer from {HF_REPO_DIR}: {e}"
+    )
 
 
 def analyze_sentiment(text: str) -> dict:

@@ -51,6 +51,17 @@ def compare_stats(
     threshold_conf=0.7,
     threshold_dist_change=0.2,
 ):
+    """
+    This method is used to compare reference and current statistics to
+    identify significant changes.
+    Args:
+        ref (dict): Reference statistics.
+        curr (dict): Current statistics.
+        data_threshold (int): Minimum number of records to consider.
+        threshold_conf (float): Threshold for mean confidence alert.
+        threshold_dist_change (float): Threshold for predicted distribution
+        change alert.
+    """
     alerts = []
     if curr['count'] >= data_threshold:
         if curr['mean_confidence'] < threshold_conf:
@@ -61,6 +72,7 @@ def compare_stats(
         if ref:
             for label, frac in curr["pred_dist"].items():
                 ref_frac = ref["pred_dist"].get(str(label), 0)
+                # This check is made only if there is a reference stats.
                 if ref_frac and abs(frac - ref_frac) > threshold_dist_change:
                     alerts.append(
                         f'Predicted class {label} fraction changed from '
@@ -129,6 +141,7 @@ def main():
     logger.info(f'Report: {json.dumps(report, indent=2)}')
 
     if alerts and ref:
+        # If `alerts` and `ref` exist, start retraining.
         start_training()
 
     # if ref not exists, save the first one as reference

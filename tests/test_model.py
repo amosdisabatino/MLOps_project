@@ -59,7 +59,7 @@ def test_special_characters():
 def test_api_endpoints():
     client = TestClient(app)
 
-    response = client.post("/predict", json={"text": "I love this company!"})
+    response = client.post("/predict", json={"text": "I love this             company!"})
     assert response.status_code == 200
 
     response = client.get("/metrics")

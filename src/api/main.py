@@ -15,7 +15,7 @@ os.makedirs("data", exist_ok=True)
 
 class TextInput(BaseModel):
     text: str = Field(
-        min_lenght=1,
+        min_length=1,
         max_length=512,
     )
 

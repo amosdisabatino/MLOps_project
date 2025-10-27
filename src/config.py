@@ -25,3 +25,5 @@ CURRENT_PATH = "data/predictions.csv"
 REF_STATS_FILE = "monitoring/ref_stats.json"
 
 OUTPUT_REPORT = "monitoring/no_label_monitoring_report.json"
+
+METRICS_PATH = "metrics"

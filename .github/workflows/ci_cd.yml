@@ -27,6 +27,7 @@ jobs:
 
       - name: Run MyPy (static type checking)
         run: |
+          mypy --install-types
           mypy src/
 
       - name: Run Black

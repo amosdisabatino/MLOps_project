@@ -21,10 +21,6 @@ jobs:
           pip install --upgrade pip
           pip install black flake8 mypy
 
-      - name: Run Black
-        run: |
-          black --check src/ tests/
-
       - name: Run Flake8
         run: |
           flake8 src/ tests/
@@ -32,6 +28,10 @@ jobs:
       - name: Run MyPy (static type checking)
         run: |
           mypy src/
+
+      - name: Run Black
+        run: |
+          black --check src/ tests/
 
   build:
     runs-on: ubuntu-latest

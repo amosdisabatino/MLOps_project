@@ -3,7 +3,8 @@ from pydantic import BaseModel, Field, field_validator
 from src.model import analyze_sentiment
 from datetime import datetime
 from collections import Counter
-from src.config import CURRENT_PATH
+from src.config import CURRENT_PATH, LOCK_PATH
+from filelock import FileLock
 
 import csv
 import os
@@ -87,15 +88,23 @@ def read_csv():
 
 
 def save_result_in_csv(result, review):
-    with open(CURRENT_PATH, mode="a", newline="") as f:
-        writer = csv.writer(f)
-        if f.tell() == 0:
-            writer.writerow(["Timestamp", "Text", "Label", "Confidence"])
-        writer.writerow(
-            [
-                datetime.now().isoformat(),
-                review.text,
-                result.get("label", ""),
-                result.get("confidence", 0.0),
-            ]
-        )
+    # FileLock is needed to avoid race conditions when multiple requests
+    # try to write to the CSV file at the same time.
+    lock = FileLock(LOCK_PATH, timeout=10)
+    try:
+        with lock:
+            with open(CURRENT_PATH, mode="a", newline="") as f:
+                writer = csv.writer(f)
+                if f.tell() == 0:
+                    header_vals = ["Timestamp", "Text", "Label", "Confidence"]
+                    writer.writerow(header_vals)
+                writer.writerow(
+                    [
+                        datetime.now().isoformat(),
+                        review.text,
+                        result.get("label", ""),
+                        result.get("confidence", 0.0),
+                    ]
+                )
+    except Exception as e:
+        raise RuntimeError(f"Error saving result to CSV: {e}")

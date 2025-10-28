@@ -24,20 +24,25 @@ def analyze_sentiment(text: str) -> dict:
     :return: `dict`
     """
 
-    inputs = tokenizer(
-        text,
-        return_tensors="pt",
-        truncation=True,
-        padding=True,
-    )
+    try:
 
-    with torch.no_grad():
-        outputs = model(**inputs)
+        inputs = tokenizer(
+            text,
+            return_tensors="pt",
+            truncation=True,
+            padding=True,
+        )
 
-    probs = F.softmax(outputs.logits, dim=-1)
+        with torch.no_grad():
+            outputs = model(**inputs)
 
-    pred_id = torch.argmax(probs, dim=-1).item()
-    labels = model.config.id2label
-    label = labels[pred_id] if labels else str(pred_id)
+        probs = F.softmax(outputs.logits, dim=-1)
 
-    return {"label": label, "confidence": probs[0][pred_id].item()}
+        pred_id = torch.argmax(probs, dim=-1).item()
+        labels = model.config.id2label
+        label = labels[pred_id] if labels else str(pred_id)
+
+        return {"label": label, "confidence": probs[0][pred_id].item()}
+
+    except Exception as e:
+        raise RuntimeError(f"Error during sentiment analysis: {e}")

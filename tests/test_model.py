@@ -1,6 +1,14 @@
+from datetime import datetime
 from src.model import analyze_sentiment
-from src.api.main import app
+from src.api import main
+from src.api.main import app, save_result_in_csv, TextInput
 from fastapi.testclient import TestClient
+import os
+import threading
+import csv
+import time
+
+client = TestClient(app)
 
 
 def test_positive_sentence():
@@ -56,8 +64,11 @@ def test_special_characters():
     assert result["label"] == "positive"
 
 
-def test_api_endpoints():
-    client = TestClient(app)
+def test_api_endpoints(tmp_path):
+    csv_path = tmp_path / "predictions.csv"
+    lock_path = f"{csv_path}.lock"
+    main.CURRENT_PATH = str(csv_path)
+    main.LOCK_PATH = str(lock_path)
 
     response = client.post("/predict", json={"text": "I love this company!"})
     assert response.status_code == 200
@@ -67,3 +78,64 @@ def test_api_endpoints():
 
     response = client.get("/data")
     assert response.status_code == 200
+
+
+def test_valid_prediction():
+    results = analyze_sentiment("This company is great!")
+    assert "label" in results
+    assert results["label"] in ["negative", "neutral", "positive"]
+    assert "confidence" in results
+    assert isinstance(results["confidence"], float)
+    assert 0.0 <= results["confidence"] <= 1.0
+
+
+def test_invalid_input():
+    response = client.post("/predict", json={"text": "   "})
+    assert response.status_code == 422
+
+
+def test_file_locking(tmp_path):
+    """
+    This test simulates two concurrent writes and checks that the CSV is
+    written correctly.
+    """
+
+    # Update the paths in the main module to use the temp test files
+
+    csv_path = tmp_path / "predictions.csv"
+    lock_path = f"{csv_path}.lock"
+    main.CURRENT_PATH = str(csv_path)
+    main.LOCK_PATH = str(lock_path)
+
+    # Test results to be written
+    result1 = {
+        "Timestamp": datetime.now().isoformat(),
+        "label": "positive",
+        "confidence": 0.95,
+    }
+    result2 = {
+        "Timestamp": datetime.now().isoformat(),
+        "label": "negative",
+        "confidence": 0.88,
+    }
+
+    review1 = TextInput(text="This company is good!")
+    review2 = TextInput(text="This company is terrible!")
+
+    # Creates two threads that write simultaneously
+    t1 = threading.Thread(target=save_result_in_csv, args=(result1, review1))
+    t2 = threading.Thread(target=save_result_in_csv, args=(result2, review2))
+
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
+
+    time.sleep(0.3)
+
+    assert os.path.exists(csv_path)
+    with open(csv_path, newline="") as f:
+        rows = list(csv.reader(f))
+        assert len(rows) == 3  # header + 2 rows
+        labels = [row[2] for row in rows[1:]]
+        assert set(labels) == {"positive", "negative"}

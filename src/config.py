@@ -22,6 +22,8 @@ HF_REPO_DIR = "DiSabatino/mlops-sentiment-model"
 
 CURRENT_PATH = "data/predictions.csv"
 
+LOCK_PATH = "data/predictions.lock"
+
 REF_STATS_FILE = "monitoring/ref_stats.json"
 
 OUTPUT_REPORT = "monitoring/no_label_monitoring_report.json"

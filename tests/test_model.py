@@ -92,6 +92,9 @@ def test_valid_prediction():
 def test_invalid_input():
     response = client.post("/predict", json={"text": "   "})
     assert response.status_code == 422
+    assert response.json()
+    assert 'detail' in response.json()
+    assert response.json()['detail'][0]['msg']
 
 
 def test_file_locking(tmp_path):
@@ -139,3 +142,31 @@ def test_file_locking(tmp_path):
         assert len(rows) == 3  # header + 2 rows
         labels = [row[2] for row in rows[1:]]
         assert set(labels) == {"positive", "negative"}
+
+
+def test_save_result_with_corrupted_csv(tmp_path):
+    csv_path = tmp_path / "predictions.csv"
+    lock_path = f"{csv_path}.lock"
+
+    main.CURRENT_PATH = str(csv_path)
+    main.LOCK_PATH = str(lock_path)
+
+    # Create a wrong csv file
+    with open(csv_path, "wb") as f:
+        f.write(b"\xff\xfe\x00\x00bad-data-corrupted")
+
+    review = TextInput(text="This company is good!")
+
+    result = {"label": "positive", "confidence": 0.82}
+
+    try:
+        save_result_in_csv(result, review)
+    except Exception:
+        assert False
+
+    # The damaged file must still exist
+    assert os.path.exists(csv_path)
+
+    with open(csv_path, newline="", errors="ignore") as f:
+        content = f.read()
+        assert "positive" in content

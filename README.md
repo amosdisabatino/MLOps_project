@@ -25,6 +25,33 @@ CSV Logging: each prediction is saved for analysis and monitoring of real data.
 The model is re-trained with sentiment data of the `tweet_eval` dataset, in order to classify 3 classes (`negative`, `neutral` and `positive`).
 The model trained is `cardiffnlp/twitter-roberta-base-sentiment-latest` in `HuggingFace` and its `tokenizer` is used to prepare the data.
 
+## Last Metrics Of The Model
+
+![Confusion Matrix](./metrics/confusion_matrix.png)
+
+| accuracy | precision | recall | f1 |
+|-----------|------------|--------|------|
+| 0.6829 | 0.7022 | 0.6829 | 0.6765 |
+
+|        | precision |  recall | f1-score |  support |
+|--------|-----------|---------|----------|----------|
+|negative|       0.65 |     0.84|      0.73|      3972|
+|neutral |       0.77 |     0.54|      0.63|      5937|
+|positive |      0.62 |     0.79|      0.70|      2375|
+|accuracy |           |         |      0.68  |   12284 |
+|macro avg |     0.68  |    0.72  |    0.69  |   12284 |
+|weighted avg |   0.70  |    0.68  |    0.68  |   12284 |
+
+
+Although the test dataset provided by TweetEval is unbalanced (with fewer "positive" tweets), the model performs well on this class, with relatively high recall and f1-score values.
+
+As for the largest class (‘neutral’), performance is lower: several neutral tweets are classified as "positive" or "negative". This indicates that the model struggles to recognise texts with an ambiguous or subtle tone.
+To further improve performance, class weighting or data augmentation techniques could be experimented with to better balance the distribution and reduce confusion between categories.
+
+The overall accuracy is just below 0.70, a result partly influenced by the lower recall (0.54) of the "neutral" class. This behaviour is consistent with the difficulty, typical in sentiment analysis models, of accurately distinguishing truly neutral content from content with implicit polarity.
+
+P.N: Results could be changed after the last trainings/tests, in this case please see the `model_results.csv` file.
+
 ## Use cases:
 
 The model can be used to monitor a company's reputation or the quality of a product for example.

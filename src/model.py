@@ -25,7 +25,6 @@ def analyze_sentiment(text: str) -> dict:
     """
 
     try:
-
         inputs = tokenizer(
             text,
             return_tensors="pt",

@@ -1,7 +1,7 @@
 import os
 import torch
 import logging
-from config import HF_REPO_DIR, DATASET_NAME, METRICS_PATH
+from config import HF_REPO_DIR, DATASET_NAME, METRICS_PATH, STR_LABELS
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from sklearn.metrics import (
@@ -10,6 +10,7 @@ from sklearn.metrics import (
     recall_score,
     f1_score,
     confusion_matrix,
+    classification_report
 )
 import pandas as pd
 import seaborn as sns
@@ -70,6 +71,14 @@ precision = precision_score(labels, preds, average="weighted")
 recall = recall_score(labels, preds, average="weighted")
 f1 = f1_score(labels, preds, average="weighted")
 
+# Display Metrics By Labels
+
+cf_report = classification_report(
+    labels, preds, target_names=STR_LABELS.values()
+)
+logger.info("Metrics by Label:")
+logger.info(cf_report)
+
 # Display Metrics
 logger.info("Metrics of the model:")
 logger.info(f"Accuracy:  {accuracy:.3f}")
@@ -105,7 +114,8 @@ results = {
     "accuracy": accuracy,
     "precision": precision,
     "recall": recall,
-    "f1": f1
+    "f1": f1,
+    "cf_report": cf_report,
 }
 pd.DataFrame([results]).to_csv(
     f"{METRICS_PATH}/model_results.csv", index=False

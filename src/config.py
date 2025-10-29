@@ -4,6 +4,12 @@ LABELS = {
     "positive": 2,
 }
 
+STR_LABELS = {
+    0: "negative",
+    1: "neutral",
+    2: "positive",
+}
+
 NUM_RECS_TRAIN = 2000
 
 NUM_RECS_TEST_VAL = 250

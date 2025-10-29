@@ -10,6 +10,36 @@ The prediction results will be saved in a `csv` file.
 
 With the interaction of the model, it is possible to classify each sentence in `negative`, `neutral` or `positive`.
 
+## Cloning repository
+
+You can clone the repository using:
+
+```
+git clone git@github.com:amosdisabatino/MLOps_project.git
+```
+
+Then install all dependencies using:
+
+```
+pip install --upgrade pip --break-system-packages
+```
+
+```
+pip install -e . --break-system-packages
+```
+
+To use your HuggingFace token you can:
+
+1- Go to [HuggingFace Token](https://huggingface.co/settings/tokens)
+
+2- Copy the token
+
+3- Login using the copied token:
+
+```
+huggingface-cli login
+```
+
 ## Motivation and Architectural Choices
 
 Transformer-based model: chosen for its excellent NLP capabilities and context management.
@@ -50,7 +80,7 @@ To further improve performance, class weighting or data augmentation techniques 
 
 The overall accuracy is just below 0.70, a result partly influenced by the lower recall (0.54) of the "neutral" class. This behaviour is consistent with the difficulty, typical in sentiment analysis models, of accurately distinguishing truly neutral content from content with implicit polarity.
 
-P.N: Results could be changed after the last trainings/tests, in this case please see the `model_results.csv` file.
+P.N: Results could be changed after the last trainings/tests, in this case please read the `model_results.csv` file.
 
 ## Use cases:
 

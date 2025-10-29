@@ -70,6 +70,40 @@ docker pull amosdisabatino/mlops_project
 docker run -p 8000:8000 amosdisabatino/mlops_project
 ```
 
+## How Use The Apllication
+
+You can test the model's predictions in three ways:
+
+After starting the application with the docker command, you can run a similar command using curl (in a new terminal window):
+
+```
+curl -X POST "http://127.0.0.1:8000/predict" \
+     -H "Content-Type: application/json" \
+     -d '{"text": "I really love this company!"}
+```
+
+You should get a response similar to this:
+
+```
+{"label":"positive","confidence":0.9995695948600769}
+```
+
+Using a python script or from a new terminal window:
+
+```
+python3
+
+>>> import requests
+>>> resp = requests.post("http://localhost:8000/predict", json={"text": "I really love this company!"})
+>>> print(resp)
+<Response [200]>
+>>> print(resp.json())
+{'label': 'positive', 'confidence': 0.9995695948600769}
+
+```
+
+Or from the `http://localhost:8000/docs` url.
+
 ## Technologies used:
 
 - Docker

@@ -42,20 +42,27 @@ logger.info("Fine Tuning Process")
 
 logger.info("Loading Tweet Dataset...")
 
-dataset = load_dataset(DATASET_NAME, "sentiment")
 
+try:
+    dataset = load_dataset(DATASET_NAME, "sentiment")
+except Exception as e:
+    logger.info(f"Error while loading dataset: {e}")
+    exit()
 
 logger.info("Loading Model...")
 
-# This part of code is used to download the pre-trainded model from
-# `huggingface` and its `tokenizer`, that it is used to convert the words in
-# numeric data, so that the model can work with them.
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-
-config = AutoConfig.from_pretrained(MODEL_NAME)
-model = AutoModelForSequenceClassification.from_pretrained(
-    MODEL_NAME, num_labels=config.num_labels, ignore_mismatched_sizes=True
-)
+try:
+    # This part of code is used to download the pre-trainded model from
+    # `huggingface` and its `tokenizer`, that it is used to convert the words
+    # in numeric data, so that the model can work with them.
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    config = AutoConfig.from_pretrained(MODEL_NAME)
+    model = AutoModelForSequenceClassification.from_pretrained(
+        MODEL_NAME, num_labels=config.num_labels, ignore_mismatched_sizes=True
+    )
+except Exception as e:
+    logger.info(f"Error while loading tokenizer, config or model: {e}")
+    exit()
 
 train_data = dataset["train"]
 test_data = dataset["test"]
@@ -234,11 +241,15 @@ else:
 logger.info(f"Old Accuracy: {old_accuracy} , New Accuracy: {new_accuracy}")
 
 if upload:
-    upload_folder(
-        repo_id=HF_REPO_DIR,
-        folder_path=BASE_PATH,
-        repo_type="model",
-    )
-    logger.info("Upload Complete.")
+    try:
+        upload_folder(
+            repo_id=HF_REPO_DIR,
+            folder_path=BASE_PATH,
+            repo_type="model",
+        )
+        logger.info("Upload Complete.")
+    except Exception as e:
+        logger.info(f"Upload Failed: {e}")
+        exit()
 else:
     logger.info("New non-performing model, upload blocked.")

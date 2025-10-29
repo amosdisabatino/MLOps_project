@@ -8,7 +8,7 @@ try:
     model = AutoModelForSequenceClassification.from_pretrained(HF_REPO_DIR)
 except Exception as e:
     raise RuntimeError(
-        f"Error loading model or tokenizer from {HF_REPO_DIR}: {e}"
+        f"Error while loading model or tokenizer from {HF_REPO_DIR}: {e}"
     )
 
 

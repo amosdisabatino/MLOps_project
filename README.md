@@ -40,6 +40,8 @@ To use your HuggingFace token you can:
 huggingface-cli login
 ```
 
+4- Create a new repository and change the `HF_REPO_DIR` variable in `config.py`
+
 ## Motivation and Architectural Choices
 
 Transformer-based model: chosen for its excellent NLP capabilities and context management.

@@ -40,7 +40,9 @@ To use your HuggingFace token you can:
 huggingface-cli login
 ```
 
-4- Create a new repository and change the `HF_REPO_DIR` variable in `config.py`
+4- Create a new repository on HuggingFace and change the `HF_REPO_DIR` variable in `config.py`
+
+P.N: If you wish to change other environment variables such as `DATASET_NAME` or `MODEL_NAME`, you can do so in the `config.py` script.
 
 ## Motivation and Architectural Choices
 
@@ -82,7 +84,7 @@ To further improve performance, class weighting or data augmentation techniques 
 
 The overall accuracy is just below 0.70, a result partly influenced by the lower recall (0.54) of the "neutral" class. This behaviour is consistent with the difficulty, typical in sentiment analysis models, of accurately distinguishing truly neutral content from content with implicit polarity.
 
-P.N: Results could be changed after the last trainings/tests, in this case please read the `model_results.csv` file.
+P.N: Results could be changed after the last trainings/tests, in this case please run the `src\evaluate_model.py.py` script and read the `model_results.csv` file.
 
 ## Use cases:
 

@@ -66,8 +66,8 @@ def compare_stats(
     if curr['count'] >= data_threshold:
         if curr['mean_confidence'] < threshold_conf:
             alerts.append(
-                f'Mean confidence {curr['mean_confidence']:.3f} '
-                f'below threshold {threshold_conf}'
+                f"Mean confidence {curr['mean_confidence']:.3f} "
+                f"below threshold {threshold_conf}"
             )
         if ref:
             for label, frac in curr["pred_dist"].items():
@@ -75,18 +75,18 @@ def compare_stats(
                 # This check is made only if there is a reference stats.
                 if ref_frac and abs(frac - ref_frac) > threshold_dist_change:
                     alerts.append(
-                        f'Predicted class {label} fraction changed from '
-                        f'{ref_frac:.3f} to {frac:.3f}'
+                        f"Predicted class {label} fraction changed from "
+                        f"{ref_frac:.3f} to {frac:.3f}"
                     )
                 else:
                     logger.info(
-                        f'No significant change for class {label}: '
-                        f'{ref_frac:.3f} to {frac:.3f}'
+                        f"No significant change for class {label}: "
+                        f"{ref_frac:.3f} to {frac:.3f}"
                     )
     else:
         logger.info(
-            f'Not enough data for monitoring: {curr["count"]} records '
-            f'found, {data_threshold} required.'
+            f"Not enough data for monitoring: {curr['count']} records "
+            f"found, {data_threshold} required."
         )
     return alerts
 
@@ -101,8 +101,7 @@ def start_training():
     if os.path.exists(train_script):
         try:
             logger.info(
-                'Alerts detected — launching training script: '
-                f'{train_script}'
+                f"Alerts detected — launching training script: {train_script}"
             )
             subprocess.run(
                 [sys.executable, train_script],
@@ -111,17 +110,17 @@ def start_training():
             logger.info('Training script finished successfully.')
         except subprocess.CalledProcessError as e:
             logger.exception(
-                f'Training script exited with non-zero status: {e}'
+                f"Training script exited with non-zero status: {e}"
             )
         except Exception as e:
-            logger.exception(f'Failed to run training script: {e}')
+            logger.exception(f"Failed to run training script: {e}")
     else:
-        logger.error(f'Training script not found at {train_script}')
+        logger.error(f"Training script not found at {train_script}")
 
 
 def main():
 
-    logger.info('Starting Monitoring Process...')
+    logger.info("Starting Monitoring Process...")
 
     df = load_log()
     curr = compute_current_stats(df)
@@ -147,7 +146,7 @@ def main():
     # if ref not exists, save the first one as reference
     if ref is None:
         save_current_as_reference(curr)
-        logger.info('Reference stats initialized.')
+        logger.info("Reference stats initialized.")
 
 
 if __name__ == "__main__":

@@ -4,6 +4,12 @@ LABELS = {
     "positive": 2,
 }
 
+STR_LABELS = {
+    0: "negative",
+    1: "neutral",
+    2: "positive",
+}
+
 NUM_RECS_TRAIN = 2000
 
 NUM_RECS_TEST_VAL = 250
@@ -22,6 +28,10 @@ HF_REPO_DIR = "DiSabatino/mlops-sentiment-model"
 
 CURRENT_PATH = "data/predictions.csv"
 
+LOCK_PATH = "data/predictions.lock"
+
 REF_STATS_FILE = "monitoring/ref_stats.json"
 
 OUTPUT_REPORT = "monitoring/no_label_monitoring_report.json"
+
+METRICS_PATH = "metrics"
